@@ -3,10 +3,12 @@ package com.example.springsecurity.controllers;
 import com.example.springsecurity.dtos.CreateUserDto;
 import com.example.springsecurity.dtos.LoginUserDto;
 import com.example.springsecurity.dtos.RecoveryJwtTokenDto;
+import com.example.springsecurity.dtos.UserProfileDto;
 import com.example.springsecurity.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,6 +28,11 @@ public class UserController {
                                                              dto) {
         RecoveryJwtTokenDto token = userService.authenticateUser(dto);
         return ResponseEntity.ok(token);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserProfileDto> getCurrentUser(Authentication authentication) {
+        return ResponseEntity.ok(userService.getUserInformation(authentication));
     }
 
     @GetMapping("/test")

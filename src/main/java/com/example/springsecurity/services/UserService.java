@@ -3,12 +3,15 @@ package com.example.springsecurity.services;
 import com.example.springsecurity.dtos.CreateUserDto;
 import com.example.springsecurity.dtos.LoginUserDto;
 import com.example.springsecurity.dtos.RecoveryJwtTokenDto;
+import com.example.springsecurity.dtos.UserProfileDto;
 import com.example.springsecurity.entities.Role;
 import com.example.springsecurity.entities.User;
 import com.example.springsecurity.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,10 +25,13 @@ public class UserService {
 
     @Autowired
     private JwtTokenService jwtTokenService;
+
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private PasswordEncoder passwordEncoder;
+
     public RecoveryJwtTokenDto authenticateUser(LoginUserDto loginDto) {
         var authToken = new UsernamePasswordAuthenticationToken(loginDto.email(),
                 loginDto.password());
@@ -36,6 +42,7 @@ public class UserService {
         String token = jwtTokenService.generateToken(userDetails);
         return new RecoveryJwtTokenDto(token);
     }
+
     public void createUser(CreateUserDto createDto) {
         User newUser = User.builder()
                 .email(createDto.email())
@@ -43,5 +50,19 @@ public class UserService {
                 .roles(List.of(Role.builder().name(createDto.role()).build()))
                 .build();
         userRepository.save(newUser);
+    }
+
+    public UserProfileDto getUserInformation(Authentication authentication) {
+        String email = authentication.getName();
+
+        var user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        var roles = user.getRoles().stream()
+                .map(role -> role.getName().name())
+                .toList();
+
+        return new UserProfileDto(user.getId(), user.getEmail(),
+                roles);
     }
 }
